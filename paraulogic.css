@@ -336,11 +336,12 @@ h2 {
 
 
 #solution-list {
+    margin-bottom: 1em;
     list-style-type: none;
     column-count: 2;
     column-gap: 25px;
     column-rule-style: dotted;
-    position: relative
+    position: relative;
 }
 
 @media (min-width:500px) {
