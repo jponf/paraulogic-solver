@@ -77,7 +77,11 @@ function postProcessWords(wordsData) {
  * @returns The string without any diacritic mark.
  */
 function stripDiacritics(text) {
-    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    // strip all diacritics except:
+    //  - [u+0327] Combining Cedilla (for example: ç)
+    return text.normalize("NFD")
+               .replace(/[\u0300-\u0326]/g, "")
+               .replace(/[\u0328-\u036f]/g, "");
 }
 
 function isAnIgnoredCharacter(char) {
