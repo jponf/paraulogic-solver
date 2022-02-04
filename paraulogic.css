@@ -359,24 +359,6 @@ button:focus, button:hover {
     perspective: 1000px
 }
 
-@keyframes shake {
-    10%, 90% {
-        transform: translate3d(-1px, 0, 0)
-    }
-
-    20%, 80% {
-        transform: translate3d(2px, 0, 0)
-    }
-
-    30%, 50%, 70% {
-        transform: translate3d(-4px, 0, 0)
-    }
-
-    40%, 60% {
-        transform: translate3d(4px, 0, 0)
-    }
-}
-
 .nav-container {
     position: absolute;
     top: 20px;
@@ -390,71 +372,43 @@ h2 {
     clear: both
 }
 
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 200;
-    background-color: rgba(255, 255, 255, .96);
-    overflow-y: auto;
-    overflow-x: hidden
-}
-
 .modal .container {
     max-width: 800px;
     margin: 20px auto;
     margin-top: 10px
 }
 
-.modal-content {
-    margin: 40px;
-    margin-top: 20px
-}
-
-.close-button-container {
-    text-align: center
-}
-
-.close-icon-container {
-    float: right
-}
-
-img.ok-icon {
-    width: 10px;
-    height: auto;
-    margin-left: -14px;
-    margin-right: 4px
-}
-
-img.close-icon {
-    width: 28px;
-    height: auto;
-    margin-right: 20px;
-    margin-top: 20px
-}
-
-.logo-vilaweb img, img.close-icon, img.ok-icon {
-    user-select: none
-}
 
 #solution-list {
     list-style-type: none;
     column-count: 2;
     column-gap: 25px;
+    column-rule-style: dotted;
+    column-rule-width: 2px;
     position: relative
 }
 
 @media (min-width:500px) {
     #solution-list {
-        column-count: 3
+        column-count: 3;
     }
 }
 
 @media (min-width:600px) {
     #solution-list {
-        column-count: 4
+        column-count: 4;
+    }
+}
+
+@media (min-width:700px) {
+    #solution-list {
+        column-count: 5;
+    }
+}
+
+@media (min-width:800px) {
+    #solution-list {
+        column-count: 6;
     }
 }
 

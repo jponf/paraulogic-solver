@@ -124,7 +124,7 @@ function findSolutions() {
 
 document.getElementById("solve-button").onclick = function () {
     load_words(function () {
-        let resultsDiv = document.getElementById("definition");
+        let resultsDiv = document.getElementById("solution-list");
         const [validWords, validAffixes] = findSolutions();
 
         // Clear DOM
