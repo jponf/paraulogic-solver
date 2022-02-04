@@ -1,0 +1,104 @@
+<html lang="ca">
+
+<head>
+    <title>Paraulògic Solver</title>
+
+    <title>Paraulògic</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Soluciona el Paraulògic.">
+
+    <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="preconnect" href="//fonts.googleapis.com">
+    <link rel="preconnect" href="//fonts.gstatic.com" crossorigin="">
+    <link href="//fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&amp;display=swap" rel="stylesheet">
+    <link href="paraulogic.css" rel="stylesheet">
+</head>
+
+<body>
+    <h1>
+        <a href>
+            <img src="img/logotip.svg" width="220" height="54" class="logo" alt="Paraulògic logo">
+        </a>
+    </h1>
+
+    <div class="container-hexgrid">
+        <ul id="hex-grid">
+            <li class="hex">
+                <div class="hex-in">
+                    <a class="hex-link" draggable="false">
+                        <input type="text" class="hex-input" maxlength="1"
+                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                    </a>
+                </div>
+            </li>
+            <li class="hex">
+                <div class="hex-in">
+                    <a class="hex-link" draggable="false">
+                        <input type="text" class="hex-input" maxlength="1"
+                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                    </a>
+                </div>
+            </li>
+            <li class="hex">
+                <div class="hex-in">
+                    <a class="hex-link" draggable="false">
+                        <input type="text" class="hex-input" maxlength="1"
+                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                    </a>
+                </div>
+            </li>
+            <li class="hex">
+                <div class="hex-in">
+                    <a class="hex-link" draggable="false" id="center-letter">
+                        <input type="text" class="hex-input" id="center-letter-input"
+                               maxlength="1"
+                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                    </a>
+                </div>
+            </li>
+            <li class="hex">
+                <div class="hex-in">
+                    <a class="hex-link" draggable="false">
+                        <input type="text" class="hex-input" maxlength="1"
+                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                    </a>
+                </div>
+            </li>
+            <li class="hex">
+                <div class="hex-in">
+                    <a class="hex-link" draggable="false">
+                        <input type="text" class="hex-input" maxlength="1"
+                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                    </a>
+                </div>
+            </li>
+            <li class="hex">
+                <div class="hex-in">
+                    <a class="hex-link" draggable="false">
+                        <input type="text" class="hex-input" maxlength="1"
+                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                    </a>
+                </div>
+            </li>
+        </ul>
+        <div class="button-container">
+            <button id="solve-button" type="button" title="Troba paraules amb les lletres introduïdes.">
+                Resol
+            </button>
+        </div>
+
+        <div class="scoreboard">
+            <div id="definition">
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="paraulogic.js"></script>
+</body>
+
+</html>
