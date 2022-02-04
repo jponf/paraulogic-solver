@@ -40,52 +40,6 @@ img {
     border-style: none
 }
 
-.scoreboard {
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    margin-bottom: 20px
-}
-
-.scoreboard>div {
-    align-self: center;
-    line-height: 1.5;
-    margin: 8px 20px
-}
-
-#stars {
-    margin-top: -10px;
-    color: #63bcca;
-    user-select: none;
-    letter-spacing: 3px;
-    text-indent: 3px
-}
-
-.pangrama #stars {
-    color: #fc0
-}
-
-span.pangrama {
-    font-weight: bolder;
-    color: #ec4a49
-}
-
-#definition, .sol-def {
-    font-size: 10pt;
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
-    margin-top: 0;
-    margin-bottom: 10px
-}
-
-#definition a, .sol-def a {
-    cursor: initial;
-    text-decoration: none
-}
-
-.title {
-    font-weight: 700
-}
-
 sup {
     top: -.5em
 }
@@ -95,17 +49,6 @@ sub, sup {
     font-size: 75%;
     line-height: 0;
     vertical-align: baseline
-}
-
-.versaleta {
-    font-variant: small-caps;
-    text-align: justify
-}
-
-#definition h3, .sol-def h3 {
-    font-weight: 400;
-    font-size: 14px;
-    color: #e3282a
 }
 
 .tagline {
@@ -126,6 +69,34 @@ sub, sup {
     font-style: italic;
     font-weight: 700
 }
+
+.center {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+/* Loader overlay */
+
+#loader {
+    border: 12px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 12px solid #444444;
+    width: 70px;
+    height: 70px;
+    animation: spin 1s linear infinite;
+}
+  
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* End: Loader overlay */
 
 div.copyright {
     margin-top: 10px
@@ -259,15 +230,6 @@ h1 {
     margin-top: 30px
 }
 
-#level {
-    user-select: none
-}
-
-#input-word {
-    display: flex;
-    height: 30px
-}
-
 .button-container {
     display: inline-flex;
     margin: 30px auto;
@@ -303,18 +265,6 @@ button:focus, button:hover {
     background-color: #e7e7e7;
     color: #000;
     border: 2px solid #e7e7e7
-}
-
-.logo-vilaweb {
-    float: left
-}
-
-.logo-vilaweb img {
-    display: inline-block;
-    margin-top: -9px;
-    margin-left: 20px;
-    border: 2px solid #e7e7e7;
-    border-radius: 30px
 }
 
 .logo {
@@ -372,7 +322,7 @@ h2 {
     clear: both
 }
 
-.modal .container {
+.container {
     max-width: 800px;
     margin: 20px auto;
     margin-top: 10px
@@ -384,7 +334,6 @@ h2 {
     column-count: 2;
     column-gap: 25px;
     column-rule-style: dotted;
-    column-rule-width: 2px;
     position: relative
 }
 
@@ -419,44 +368,4 @@ h2 {
     letter-spacing: .005em;
     padding-top: 7px;
     padding-left: 24px
-}
-
-.words-yesterday-container {
-    margin-top: 20px;
-    text-align: center
-}
-
-#found-yesterday {
-    text-align: center
-}
-
-#discovered-text .show-def {
-    font-weight: bolder
-}
-
-.show-def {
-    cursor: pointer
-}
-
-.show-def:hover {
-    text-decoration: underline
-}
-
-audio {
-    display: none;
-    height: 0
-}
-
-.sol-def {
-    display: none;
-    z-index: 100;
-    position: absolute;
-    left: 0;
-    width: auto;
-    background-color: #fff;
-    border-radius: 3px;
-    box-shadow: 1px 1px 5px 0 rgb(0 0 0 / 40%);
-    padding: 10px;
-    line-height: inherit;
-    letter-spacing: inherit
 }

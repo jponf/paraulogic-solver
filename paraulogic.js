@@ -5,26 +5,33 @@ let CHARACTERS_TO_IGNORE = ["·", "-", "'", "’"];
 var wordsByCharacter = null;
 var wordsAffixes = null
 
-function stripDiacritics(text) {
-    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
-function isAnIgnoredCharacter(char) {
-    return /\s/.test(char) || CHARACTERS_TO_IGNORE.includes(char);
-}
-
-function isWordValid(word, validCharacters) {
-    for (let i = 0; i < word.length; ++i) {
-        if (
-            !isAnIgnoredCharacter(word[i])
-            && !validCharacters.includes(word[i])
-        ) {
-            return false;
-        }
+/**
+ * Initializes the app by fetching data from the server.
+ * @param {function} onloaded 
+ */
+function initGlobalData(onloaded) {
+    if (wordsByCharacter === null) {
+        var xobj = new XMLHttpRequest();
+        xobj.overrideMimeType("application/json");
+        xobj.open('GET', 'data/words.json', true);
+        xobj.onreadystatechange = function () {
+            if (xobj.readyState == 4 && xobj.status == "200") {
+                let jsonData = JSON.parse(xobj.responseText);
+                //postProcessWords(jsonData["words"]);
+                onloaded(jsonData["words"]);
+            }
+        };
+        xobj.send();
+    } else {
+        onloaded();
     }
-    return true;
 }
 
+/**
+ * Post process words data to simplify the process of finding
+ * words given the characters they contain.
+ * @param {[string]} wordsData 
+ */
 function postProcessWords(wordsData) {    
     wordsByCharacter = {}
     wordsAffixes = {}    
@@ -64,29 +71,51 @@ function postProcessWords(wordsData) {
     }
 }
 
-function load_words(onloaded) {
-    if (wordsByCharacter === null) {
-        var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType("application/json");
-        xobj.open('GET', 'data/words.json', true);
-        xobj.onreadystatechange = function () {
-            if (xobj.readyState == 4 && xobj.status == "200") {
-                let jsonData = JSON.parse(xobj.responseText);
-                postProcessWords(jsonData["words"]);
-                onloaded();
-            }
-        };
-        xobj.send();
-    } else {
-        onloaded();
-    }
+/**
+ * Removes diacritic marks from the input string.
+ * @param {string} text 
+ * @returns The string without any diacritic mark.
+ */
+function stripDiacritics(text) {
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
+
+function isAnIgnoredCharacter(char) {
+    return /\s/.test(char) || CHARACTERS_TO_IGNORE.includes(char);
+}
+
+function isWordValid(word, validCharacters) {
+    for (let i = 0; i < word.length; ++i) {
+        if (
+            !isAnIgnoredCharacter(word[i])
+            && !validCharacters.includes(word[i])
+        ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Load data when document is ready
+ */
+document.onreadystatechange = function() {
+    if (document.readyState !== "complete") {
+        document.querySelector("body").style.visibility = "hidden";
+        document.querySelector("#loader").style.visibility = "visible";
+    } else {
+        initGlobalData(function(wordsData) {
+            postProcessWords(wordsData);
+            document.querySelector("#loader").style.display = "none";
+            document.querySelector("body").style.visibility = "visible";
+        });
+    }
+};
 
 function getCharacters() {
     let domElements = Array.from(document.getElementsByClassName("hex-input"));
     return domElements.map(element => element.value.length > 0 ? element.value[0].toLowerCase() : "");
 }
-
 
 function getRequiredCharacter() {
     let domElement = document.getElementById("center-letter-input");
@@ -100,7 +129,6 @@ function getRequiredCharacter() {
 function findSolutions() {
     let characters = getCharacters();
     let keyCharacter = getRequiredCharacter();
-
 
     let keyWords = keyCharacter in wordsByCharacter
         ? wordsByCharacter[keyCharacter]
@@ -123,28 +151,25 @@ function findSolutions() {
 
 
 document.getElementById("solve-button").onclick = function () {
-    load_words(function () {
-        let resultsDiv = document.getElementById("solution-list");
-        const [validWords, validAffixes] = findSolutions();
+    let resultsDiv = document.getElementById("solution-list");
+    const [validWords, validAffixes] = findSolutions();
 
-        // Clear DOM
-        resultsDiv.innerHTML = "";
+    // Clear DOM
+    resultsDiv.innerHTML = "";
 
-        // Set solutions
-        validWords.forEach(word => {
-            const para = document.createElement("p");
-            const affixesText = validAffixes[word].join(" | ");
-            if (validAffixes[word].length > 0) {
-                const node = document.createTextNode(
-                    word + " | " + affixesText);
-                para.appendChild(node);
-            } else {
-                const node = document.createTextNode(word);
-                para.appendChild(node);
-            }
+    // Set solutions
+    validWords.forEach(word => {
+        const para = document.createElement("p");
+        const affixesText = validAffixes[word].join(" | ");
+        if (validAffixes[word].length > 0) {
+            const node = document.createTextNode(
+                word + " | " + affixesText);
+            para.appendChild(node);
+        } else {
+            const node = document.createTextNode(word);
+            para.appendChild(node);
+        }
 
-            resultsDiv.appendChild(para);
-        })
-
-    });
+        resultsDiv.appendChild(para);
+    })
 }
