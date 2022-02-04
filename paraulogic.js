@@ -13,7 +13,7 @@ function initGlobalData(onloaded) {
     if (wordsByCharacter === null) {
         var xobj = new XMLHttpRequest();
         xobj.overrideMimeType("application/json");
-        xobj.open('GET', 'data/words_v2.json', true);
+        xobj.open('GET', 'data/words_v2.min.json', true);
         xobj.onreadystatechange = function () {
             if (xobj.readyState == 4 && xobj.status == "200") {
                 let jsonData = JSON.parse(xobj.responseText);
