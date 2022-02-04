@@ -26,8 +26,15 @@
         </a>
     </h1>
 
-    <div>
-
+    <div class="container-instructions">
+        <p class="text-center">
+            Prem sobre els hexàgons i introdueix les lletres del 
+            joc que vulguis resoldre.
+        </p>
+        <p class="text-center">
+            Un cop introduïdes prem el botó <bold>Resol</bold> i espera
+            que apareguin les possibles solucions sota el botó.
+        </p>
     </div>
 
     <div class="container-hexgrid">
@@ -36,7 +43,7 @@
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
                         <input type="text" class="hex-input" maxlength="1"
-                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                            onkeydown="return /[a-z]/i.test(event.key)"></input>
                     </a>
                 </div>
             </li>
@@ -44,7 +51,7 @@
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
                         <input type="text" class="hex-input" maxlength="1"
-                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                            onkeydown="return /[a-z]/i.test(event.key)"></input>
                     </a>
                 </div>
             </li>
@@ -52,16 +59,15 @@
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
                         <input type="text" class="hex-input" maxlength="1"
-                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                            onkeydown="return /[a-z]/i.test(event.key)"></input>
                     </a>
                 </div>
             </li>
             <li class="hex">
                 <div class="hex-in">
                     <a class="hex-link" draggable="false" id="center-letter">
-                        <input type="text" class="hex-input" id="center-letter-input"
-                               maxlength="1"
-                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                        <input type="text" class="hex-input" id="center-letter-input" maxlength="1"
+                            onkeydown="return /[a-z]/i.test(event.key)"></input>
                     </a>
                 </div>
             </li>
@@ -69,7 +75,7 @@
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
                         <input type="text" class="hex-input" maxlength="1"
-                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                            onkeydown="return /[a-z]/i.test(event.key)"></input>
                     </a>
                 </div>
             </li>
@@ -77,7 +83,7 @@
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
                         <input type="text" class="hex-input" maxlength="1"
-                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                            onkeydown="return /[a-z]/i.test(event.key)"></input>
                     </a>
                 </div>
             </li>
@@ -85,7 +91,7 @@
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
                         <input type="text" class="hex-input" maxlength="1"
-                               onkeydown="return /[a-z]/i.test(event.key)"></input>
+                            onkeydown="return /[a-z]/i.test(event.key)"></input>
                     </a>
                 </div>
             </li>
@@ -97,7 +103,7 @@
         </div>
 
         <div id="solution-list">
-            
+
         </div>
     </div>
 

@@ -53,7 +53,7 @@ sub, sup {
 
 .tagline {
     font-style: italic;
-    text-align: right
+    text-align: right;
 }
 
 .italic {
@@ -79,6 +79,10 @@ sub, sup {
     margin: auto;
 }
 
+.text-center {
+    text-align: center;
+}
+
 /* Loader overlay */
 
 #loader {
@@ -97,6 +101,14 @@ sub, sup {
 }
 
 /* End: Loader overlay */
+
+.container-instructions {
+    max-width: 800px;
+    margin: 20px auto;
+    margin-top: 10px;
+    align-items: center;
+    position: relative;
+}
 
 div.copyright {
     margin-top: 10px
@@ -307,12 +319,6 @@ button:focus, button:hover {
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
     perspective: 1000px
-}
-
-.nav-container {
-    position: absolute;
-    top: 20px;
-    right: 20px
 }
 
 h2 {
