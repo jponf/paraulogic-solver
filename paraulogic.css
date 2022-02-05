@@ -21,6 +21,8 @@ body, html {
     touch-action: manipulation
 }
 
+
+
 a {
     color: #000;
     background-color: transparent;
@@ -329,7 +331,7 @@ h2 {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 20px auto;
     margin-top: 10px
 }
@@ -368,6 +370,12 @@ h2 {
     }
 }
 
+@media (min-width:800px) {
+    #solution-list {
+        column-count: 7;
+    }
+}
+
 #solution-list li {
     width: 100%;
     break-inside: avoid-column;
@@ -375,4 +383,15 @@ h2 {
     letter-spacing: .005em;
     padding-top: 7px;
     padding-left: 24px
+}
+
+
+.footer-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    
+    max-width: 900px;
+    margin: 20px auto;
+    margin-top: 10px;
 }
