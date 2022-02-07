@@ -154,8 +154,13 @@ function findSolutions() {
 
 
 function onHexKeyDown(event) {
-    if (!/[a-z|ç]/i.test(event.key)) {
-        event.preventDefault();
+    if (event.key != 46) {
+        if (
+            event.srcElement.value.length > 1 ||
+            !/[a-z|ç]/i.test(event.key)
+        ) {
+            event.preventDefault();
+        }
     }
 }
 
