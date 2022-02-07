@@ -153,6 +153,12 @@ function findSolutions() {
 }
 
 
+function onHexKeyDown(event) {
+    console.log(event.key)
+    return /[a-z|ç]/i.test(event.key)
+}
+
+
 document.getElementById("solve-button").onclick = function () {
     let resultsDiv = document.getElementById("solution-list");
     const [validWords, validAffixes] = findSolutions();
