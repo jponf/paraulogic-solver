@@ -154,9 +154,9 @@ function findSolutions() {
 
 
 function onHexKeyDown(event) {
-    if (event.key != 46) {
+    if (event.key != "Backspace") {
         if (
-            event.srcElement.value.length > 1 ||
+            event.srcElement.value.length >= 1 ||
             !/[a-z|ç]/i.test(event.key)
         ) {
             event.preventDefault();
