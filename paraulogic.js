@@ -154,8 +154,9 @@ function findSolutions() {
 
 
 function onHexKeyDown(event) {
-    console.log(event.key)
-    return /[a-z|ç]/i.test(event.key)
+    if (!/[a-z|ç]/i.test(event.key)) {
+        event.preventDefault();
+    }
 }
 
 
