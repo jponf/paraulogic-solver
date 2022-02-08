@@ -146,7 +146,7 @@ function findSolutions() {
             if (isWordValid(affix, characters)) {
                 validAffixes[word].push(affix);
             }
-        })        
+        })
     });
 
     return [validWords, validAffixes];
@@ -154,7 +154,7 @@ function findSolutions() {
 
 
 function onHexKeyDown(event) {
-    if (event.key != "Backspace") {
+    if (event.key.length == 1) {   // Non-character keys have long names
         if (
             event.srcElement.value.length >= 1 ||
             !/[a-z|ç]/i.test(event.key)
@@ -166,11 +166,19 @@ function onHexKeyDown(event) {
 
 
 document.getElementById("solve-button").onclick = function () {
+    let resultsCountPar = document.getElementById("solution-count");
     let resultsDiv = document.getElementById("solution-list");
     const [validWords, validAffixes] = findSolutions();
 
     // Clear DOM
+    resultsCountPar.innerHTML = "";
     resultsDiv.innerHTML = "";
+
+    // Count solutions
+    let resultsCount = validWords.reduce(
+        (total, current) => total + validAffixes[current].length,
+        validWords.length)
+    resultsCountPar.innerHTML = "Solucions trobades: " + resultsCount
 
     // Set solutions
     validWords.forEach(word => {

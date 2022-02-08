@@ -336,6 +336,9 @@ h2 {
     margin-top: 10px
 }
 
+#solution-count {
+    margin-bottom: 1em;
+}
 
 #solution-list {
     margin-bottom: 1em;
