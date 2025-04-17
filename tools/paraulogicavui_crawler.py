@@ -123,7 +123,6 @@ def fetch_solutions_for_date(
         raise SolutionsNotFound(date=date, url=solutions_url)
 
     matches = SOLUTIONS_RE.finditer(solutions_div.get_text(separator="\n"))
-    print(matches)
     return [m.group("word") for m in matches]
 
 
