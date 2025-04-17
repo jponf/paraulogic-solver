@@ -31,9 +31,9 @@ function initGlobalData(onloaded) {
  * words given the characters they contain.
  * @param {[string]} wordsData 
  */
-function postProcessWords(wordsData) {    
+function postProcessWords(wordsData) {
     wordsByCharacter = {}
-    wordsAffixes = {}    
+    wordsAffixes = {}
 
     wordsData.forEach(entry => {
         // Separate full words from affixes
@@ -79,8 +79,8 @@ function stripDiacritics(text) {
     // strip all diacritics except:
     //  - [u+0327] Combining Cedilla (for example: ç)
     return text.normalize("NFD")
-               .replace(/[\u0300-\u0326]/g, "")
-               .replace(/[\u0328-\u036f]/g, "");
+        .replace(/[\u0300-\u0326]/g, "")
+        .replace(/[\u0328-\u036f]/g, "");
 }
 
 function isAnIgnoredCharacter(char) {
@@ -102,12 +102,12 @@ function isWordValid(word, validCharacters) {
 /**
  * Load data when document is ready
  */
-document.onreadystatechange = function() {
+document.onreadystatechange = function () {
     if (document.readyState !== "complete") {
         document.querySelector("body").style.visibility = "hidden";
         document.querySelector("#loader").style.visibility = "visible";
     } else {
-        initGlobalData(function(wordsData) {
+        initGlobalData(function (wordsData) {
             postProcessWords(wordsData);
             document.querySelector("#loader").style.display = "none";
             document.querySelector("body").style.visibility = "visible";
