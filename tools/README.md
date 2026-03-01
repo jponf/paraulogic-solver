@@ -29,6 +29,9 @@ pip install beautifulsoup4 requests tqdm
 # Crawl last 365 days (default)
 python tools/paraulogicavui_crawler.py -o words.json
 
+# Crawl all known solutions (from earliest available date)
+python tools/paraulogicavui_crawler.py -sd 2022-08-01 -o words.json
+
 # Crawl specific date range
 python tools/paraulogicavui_crawler.py -sd 2024-01-01 -ed 2024-12-31 -o words_2024.json
 
@@ -61,6 +64,10 @@ python tools/paraulogicavui_crawler.py -sd 2023-06-01 -o words.json
 - Automatic retry on server errors (5xx)
 - Progress bar with unique word count
 - Deduplication of words across all dates
+
+### Notes
+
+- Earliest known date with solutions available: **2022-08-01**
 
 ---
 
