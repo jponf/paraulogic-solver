@@ -104,13 +104,12 @@ function isWordValid(word, validCharacters) {
  */
 document.onreadystatechange = function () {
     if (document.readyState !== "complete") {
-        document.querySelector("body").style.visibility = "hidden";
         document.querySelector("#loader").style.visibility = "visible";
     } else {
         initGlobalData(function (wordsData) {
             postProcessWords(wordsData);
             document.querySelector("#loader").style.display = "none";
-            document.querySelector("body").style.visibility = "visible";
+            document.querySelector("body").classList.remove("loading");
         });
     }
 };
@@ -156,7 +155,7 @@ function findSolutions() {
 function onHexKeyDown(event) {
     if (event.key.length == 1) {   // Non-character keys have long names
         if (
-            event.srcElement.value.length >= 1 ||
+            event.target.value.length >= 1 ||
             !/[a-z|ç]/i.test(event.key)
         ) {
             event.preventDefault();
@@ -164,6 +163,24 @@ function onHexKeyDown(event) {
     }
 }
 
+
+// Add event listeners to all hex inputs
+const hexInputs = Array.from(document.querySelectorAll(".hex-input"));
+const solveButton = document.getElementById("solve-button");
+hexInputs.forEach(function (input, index) {
+    // Capture event and allow only valid chars
+    input.addEventListener("keydown", onHexKeyDown);
+    // Focus on next hex input
+    input.addEventListener("input", function () {
+        if (input.value.length === 1 && /[a-zç]/i.test(input.value)) {
+            if (index < hexInputs.length - 1) {
+                hexInputs[index + 1].focus();
+            } else {
+                solveButton.focus();
+            }
+        }
+    });
+});
 
 document.getElementById("solve-button").onclick = function () {
     let resultsCountPar = document.getElementById("solution-count");

@@ -1,9 +1,8 @@
+<!DOCTYPE html>
 <html lang="ca">
 
 <head>
     <title>Paraulògic Solver</title>
-
-    <title>Paraulògic</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Soluciona el Paraulògic." />
@@ -18,11 +17,11 @@
     <link href="paraulogic.css" rel="stylesheet" />
 </head>
 
-<body style="visibility: hidden;">
+<body class="loading">
     <div id="loader" class="center"></div>
 
     <h1>
-        <a href>
+        <a href="/">
             <img src="img/logotip.svg" width="300" height="54" class="logo" alt="Paraulògic logo">
         </a>
     </h1>
@@ -35,7 +34,7 @@
             Fes clic als hexàgons per introduir les lletres del joc que vols resoldre.
         </p>
         <p class="text-center">
-            Quan les tinguis, prem el botó <bold>Resol</bold> i podràs consultar les
+            Quan les tinguis, prem el botó <strong>Resol</strong> i podràs consultar les
             solucions trobades a sota.
         </p>
     </div>
@@ -45,21 +44,21 @@
             <li class="hex">
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
-                        <input type="text" class="hex-input" maxlength="1" onkeydown="onHexKeyDown(event)"></input>
+                        <input type="text" class="hex-input" maxlength="1" aria-label="Lletra 1">
                     </a>
                 </div>
             </li>
             <li class="hex">
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
-                        <input type="text" class="hex-input" maxlength="1" onkeydown="onHexKeyDown(event)"></input>
+                        <input type="text" class="hex-input" maxlength="1" aria-label="Lletra 2">
                     </a>
                 </div>
             </li>
             <li class="hex">
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
-                        <input type="text" class="hex-input" maxlength="1" onkeydown="onHexKeyDown(event)"></input>
+                        <input type="text" class="hex-input" maxlength="1" aria-label="Lletra 3">
                     </a>
                 </div>
             </li>
@@ -67,28 +66,28 @@
                 <div class="hex-in">
                     <a class="hex-link" draggable="false" id="center-letter">
                         <input type="text" class="hex-input" id="center-letter-input" maxlength="1"
-                            onkeydown="onHexKeyDown(event)"></input>
+                            aria-label="Lletra central obligatòria">
                     </a>
                 </div>
             </li>
             <li class="hex">
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
-                        <input type="text" class="hex-input" maxlength="1" onkeydown="onHexKeyDown(event)"></input>
+                        <input type="text" class="hex-input" maxlength="1" aria-label="Lletra 5">
                     </a>
                 </div>
             </li>
             <li class="hex">
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
-                        <input type="text" class="hex-input" maxlength="1" onkeydown="onHexKeyDown(event)"></input>
+                        <input type="text" class="hex-input" maxlength="1" aria-label="Lletra 6">
                     </a>
                 </div>
             </li>
             <li class="hex">
                 <div class="hex-in">
                     <a class="hex-link" draggable="false">
-                        <input type="text" class="hex-input" maxlength="1" onkeydown="onHexKeyDown(event)"></input>
+                        <input type="text" class="hex-input" maxlength="1" aria-label="Lletra 7">
                     </a>
                 </div>
             </li>
@@ -106,7 +105,7 @@
 
     <footer>
         <div class="footer-container">
-            <div id="footer-counter" style="display: none;">
+            <div id="footer-counter">
                 <script type="text/javascript" src="https://www.free-counters.org/count/a8mf"></script>
                 <br>
                 <a href='http://besucherzaehler.co'>Counter</a>
