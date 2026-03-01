@@ -12,6 +12,7 @@ import logging
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Final
@@ -336,42 +337,61 @@ class DiecCrawler:
             logger.error(f"Failed to fetch conjugation for {entry_id}: {e}")
             return set()
 
+    def _process_entry_for_conjugation(self, entry: DiecEntry) -> VerbConjugation | None:
+        """Check if entry is a verb and fetch its conjugation.
+
+        Returns VerbConjugation if entry is a verb with conjugations, None otherwise.
+        """
+        info = self.fetch_entry_info(entry.entry_id)
+        if not info or not info.get("isVerb"):
+            return None
+
+        logger.info(f"Found verb: {entry.word} (id={entry.entry_id})")
+
+        forms = self.fetch_conjugation(entry.entry_id)
+        if forms:
+            conjugation = VerbConjugation(
+                entry_id=entry.entry_id,
+                infinitive=entry.word,
+                forms=forms,
+            )
+            logger.debug(f"  -> {len(forms)} forms")
+            return conjugation
+        return None
+
     def crawl_conjugations(
         self,
         entries: list[DiecEntry],
         progress_callback: Callable[[int, int, str], None] | None = None,
+        max_workers: int = 4,
     ) -> list[VerbConjugation]:
         """Crawl conjugations for all verbs in the entries list.
 
         First checks each entry to see if it's a verb, then fetches conjugations.
+        Uses ThreadPoolExecutor for parallel fetching.
         """
         conjugations: list[VerbConjugation] = []
-        verbs_found = 0
+        total = len(entries)
 
-        for i, entry in enumerate(entries):
-            if progress_callback:
-                progress_callback(i, len(entries), entry.word)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_entry = {
+                executor.submit(self._process_entry_for_conjugation, entry): entry
+                for entry in entries
+            }
 
-            # Check if this entry is a verb
-            info = self.fetch_entry_info(entry.entry_id)
-            if not info or not info.get("isVerb"):
-                continue
+            for i, future in enumerate(as_completed(future_to_entry)):
+                entry = future_to_entry[future]
+                if progress_callback:
+                    progress_callback(i, total, entry.word)
 
-            verbs_found += 1
-            logger.info(f"Found verb: {entry.word} (id={entry.entry_id})")
+                try:
+                    result = future.result()
+                    if result:
+                        conjugations.append(result)
+                except Exception as e:
+                    logger.error(f"Error processing {entry.word}: {e}")
 
-            # Fetch conjugation
-            forms = self.fetch_conjugation(entry.entry_id)
-            if forms:
-                conjugation = VerbConjugation(
-                    entry_id=entry.entry_id,
-                    infinitive=entry.word,
-                    forms=forms,
-                )
-                conjugations.append(conjugation)
-                logger.debug(f"  -> {len(forms)} forms")
-
-        logger.info(f"Found {verbs_found} verbs, {len(conjugations)} with conjugations")
+        logger.info(f"Found {len(conjugations)} verbs with conjugations")
         return conjugations
 
     def crawl_letter(
@@ -501,7 +521,13 @@ def main():
     parser.add_argument(
         "--conjugations",
         action="store_true",
-        help="Crawl verb conjugations (requires ~20k additional requests)",
+        help="Crawl verb conjugations (uses parallel fetching)",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="Number of parallel workers for conjugation fetching (default: 4)",
     )
     parser.add_argument(
         "--conjugations-only",
@@ -607,7 +633,9 @@ def main():
                 pbar.set_postfix_str(word)
                 pbar.update(1)
 
-            conjugations = crawler.crawl_conjugations(output_entries, conj_progress)
+            conjugations = crawler.crawl_conjugations(
+                output_entries, conj_progress, max_workers=args.workers
+            )
         print(f"Found {len(conjugations)} verbs with conjugations", file=sys.stderr)
 
         # Collect all conjugated forms
