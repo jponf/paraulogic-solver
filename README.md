@@ -17,3 +17,7 @@ npx serve
 ```
 
 Then open http://localhost:8000 in your browser.
+
+## Tools
+
+The [tools/](tools/) directory contains Python scripts for crawling and updating the word database. See [tools/README.md](tools/README.md) for usage instructions.

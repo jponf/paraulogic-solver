@@ -1,5 +1,18 @@
 # Tools
 
+## Setup
+
+Create a virtual environment and install dependencies:
+
+```bash
+cd tools
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+---
+
 ## paraulogicavui_crawler.py
 
 A crawler for extracting Paraulogic solutions from [paraulogicavui.com](https://paraulogicavui.com).
