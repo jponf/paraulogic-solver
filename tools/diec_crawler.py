@@ -245,7 +245,8 @@ def parse_conjugation_page(html: str) -> set[str]:
     # Find all conjugated forms in <span class="dm2-linia"> tags
     for span in soup.find_all("span", class_="dm2-linia"):
         # Skip tense labels (dm2-temps class)
-        classes = span.get("class") or []
+        class_attr: str | list[str] = span.get("class") or []
+        classes: list[str] = [class_attr] if isinstance(class_attr, str) else class_attr
         if "dm2-temps" in classes:
             continue
 
@@ -337,7 +338,9 @@ class DiecCrawler:
             logger.error(f"Failed to fetch conjugation for {entry_id}: {e}")
             return set()
 
-    def _process_entry_for_conjugation(self, entry: DiecEntry) -> VerbConjugation | None:
+    def _process_entry_for_conjugation(
+        self, entry: DiecEntry
+    ) -> VerbConjugation | None:
         """Check if entry is a verb and fetch its conjugation.
 
         Returns VerbConjugation if entry is a verb with conjugations, None otherwise.
@@ -622,7 +625,7 @@ def main():
         pages_crawled = result.pages_crawled
 
     # Crawl conjugations if requested
-    all_forms: set[str] = set()
+    verb_conjugations: dict[int, list[str]] = {}  # entry_id -> list of forms
     if args.conjugations or args.conjugations_only:
         print("\nCrawling verb conjugations...", file=sys.stderr)
         with tqdm.tqdm(
@@ -638,41 +641,39 @@ def main():
             )
         print(f"Found {len(conjugations)} verbs with conjugations", file=sys.stderr)
 
-        # Collect all conjugated forms
+        # Map entry_id -> sorted list of conjugated forms
         for conj in conjugations:
-            all_forms.update(conj.forms)
-        print(f"Total unique conjugated forms: {len(all_forms)}", file=sys.stderr)
+            verb_conjugations[conj.entry_id] = sorted(conj.forms)
 
-        # Write conjugations to separate file
-        conj_output = args.output.with_suffix(".conjugations.json")
-        conj_data = {
-            "total_verbs": len(conjugations),
-            "total_forms": len(all_forms),
-            "verbs": [c.to_dict() for c in conjugations],
-        }
-        conj_output.write_text(
-            json.dumps(conj_data, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
-        print(f"Wrote conjugations to {conj_output}", file=sys.stderr)
+        total_forms = sum(len(forms) for forms in verb_conjugations.values())
+        print(f"Total conjugated forms: {total_forms}", file=sys.stderr)
 
     # Write main output
     if args.words_only:
-        words = sorted(set(e.word for e in output_entries) | all_forms)
+        conj_words: set[str] = set()
+        for forms in verb_conjugations.values():
+            conj_words.update(forms)
+        words = sorted(set(e.word for e in output_entries) | conj_words)
         args.output.write_text("\n".join(words) + "\n", encoding="utf-8")
         print(f"Wrote {len(words)} unique words to {args.output}", file=sys.stderr)
     else:
+        # Build entries with conjugations added to verbs
+        entries_data = []
+        for entry in output_entries:
+            entry_dict = entry.to_dict()
+            if entry.entry_id in verb_conjugations:
+                entry_dict["conjugations"] = verb_conjugations[entry.entry_id]
+            entries_data.append(entry_dict)
+
         data = {
-            "total_entries": len(output_entries),
+            "total_entries": len(entries_data),
             "pages_crawled": pages_crawled,
-            "entries": [e.to_dict() for e in output_entries],
+            "entries": entries_data,
         }
-        if all_forms:
-            data["conjugated_forms"] = sorted(all_forms)
-            data["total_conjugated_forms"] = len(all_forms)
         args.output.write_text(
             json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
         )
-        print(f"Wrote {len(output_entries)} entries to {args.output}", file=sys.stderr)
+        print(f"Wrote {len(entries_data)} entries to {args.output}", file=sys.stderr)
 
 
 if __name__ == "__main__":

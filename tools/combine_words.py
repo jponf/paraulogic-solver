@@ -15,10 +15,41 @@ DEFAULT_DIEC_FILE: Final = "diec_words.json"
 DEFAULT_PARAULOGIC_FILE: Final = "words.json"
 
 
+def normalize_word(word: str) -> list[str]:
+    """Normalize a word entry, handling variants and filtering phrases.
+
+    - "abstenir o abstindre" -> ["abstenir", "abstindre"] (split variants)
+    - "a mansalva" -> [] (filter out phrases)
+    - "normal" -> ["normal"]
+
+    Returns list of valid single words.
+    """
+    word = word.strip()
+    if not word:
+        return []
+
+    # Check for variant pattern: "word1 o word2" (Catalan "or")
+    if " o " in word:
+        parts = [p.strip() for p in word.split(" o ")]
+        # Validate each part is a single word
+        result = []
+        for part in parts:
+            if part and " " not in part:
+                result.append(part)
+        return result
+
+    # Filter out phrases (multiple words without "o" separator)
+    if " " in word:
+        return []
+
+    return [word]
+
+
 def load_diec_words(path: Path) -> set[str]:
     """Load words from DIEC crawler output.
 
     Supports both JSON format and words-only (one per line) format.
+    Normalizes entries: splits variants ("word1 o word2") and filters phrases.
     """
     words: set[str] = set()
 
@@ -32,27 +63,29 @@ def load_diec_words(path: Path) -> set[str]:
     try:
         data = json.loads(content)
         if "entries" in data:
-            # JSON format: {"entries": [{"word": "..."}, ...]}
+            # JSON format: {"entries": [{"word": "...", "conjugations": [...]}, ...]}
             for entry in data["entries"]:
                 if word := entry.get("word"):
-                    words.add(word.strip())
+                    words.update(normalize_word(word))
+                # Also include conjugated forms if present
+                if conjugations := entry.get("conjugations"):
+                    for form in conjugations:
+                        words.update(normalize_word(form))
         elif "words" in data:
             # Alternative format
             for word_entry in data["words"]:
                 if isinstance(word_entry, list) and word_entry:
                     for w in word_entry:
-                        words.add(w.strip())
+                        words.update(normalize_word(w))
                 elif isinstance(word_entry, str):
-                    words.add(word_entry.strip())
+                    words.update(normalize_word(word_entry))
         return words
     except json.JSONDecodeError:
         pass
 
     # Fall back to words-only format (one per line)
     for line in content.splitlines():
-        line = line.strip()
-        if line:
-            words.add(line)
+        words.update(normalize_word(line))
 
     return words
 
@@ -61,6 +94,7 @@ def load_paraulogic_words(path: Path) -> set[str]:
     """Load words from Paraulogic crawler output.
 
     Expected format: {"words": [["word1"], ["word2"], ...]}
+    Normalizes entries: splits variants ("word1 o word2") and filters phrases.
     """
     words: set[str] = set()
 
@@ -76,21 +110,33 @@ def load_paraulogic_words(path: Path) -> set[str]:
             for word_entry in data["words"]:
                 if isinstance(word_entry, list):
                     for w in word_entry:
-                        words.add(w.strip())
+                        words.update(normalize_word(w))
                 elif isinstance(word_entry, str):
-                    words.add(word_entry.strip())
+                    words.update(normalize_word(word_entry))
     except json.JSONDecodeError as e:
         print(f"Error parsing Paraulogic file: {e}", file=sys.stderr)
 
     return words
 
 
-def load_existing_words(path: Path) -> set[str]:
-    """Load words from existing words_v*.json file."""
-    words: set[str] = set()
+def get_root_form(group: list[str]) -> str | None:
+    """Get the root form from a word group (the one without '-' prefix)."""
+    for word in group:
+        if not word.startswith("-"):
+            return word
+    return None
+
+
+def load_existing_groups(path: Path) -> dict[str, list[str]]:
+    """Load word groups from existing words_v*.json file.
+
+    Returns a dict mapping root form -> full group list.
+    Preserves groupings like ["-a", "dècuple"] where "dècuple" is the root.
+    """
+    groups: dict[str, list[str]] = {}
 
     if not path.exists():
-        return words
+        return groups
 
     content = path.read_text(encoding="utf-8")
 
@@ -98,14 +144,29 @@ def load_existing_words(path: Path) -> set[str]:
         data = json.loads(content)
         if "words" in data:
             for word_entry in data["words"]:
-                if isinstance(word_entry, list):
-                    for w in word_entry:
-                        words.add(w.strip())
+                if isinstance(word_entry, list) and word_entry:
+                    # Find the root form (without "-" prefix)
+                    root = get_root_form(word_entry)
+                    if root:
+                        groups[root] = [w.strip() for w in word_entry]
+                    else:
+                        # All forms have "-", use first as key
+                        groups[word_entry[0].strip()] = [w.strip() for w in word_entry]
                 elif isinstance(word_entry, str):
-                    words.add(word_entry.strip())
+                    word = word_entry.strip()
+                    groups[word] = [word]
     except json.JSONDecodeError as e:
         print(f"Error parsing existing file: {e}", file=sys.stderr)
 
+    return groups
+
+
+def load_existing_words(path: Path) -> set[str]:
+    """Load words from existing words_v*.json file (flat set)."""
+    groups = load_existing_groups(path)
+    words: set[str] = set()
+    for group in groups.values():
+        words.update(group)
     return words
 
 
@@ -163,7 +224,7 @@ def main() -> int:
     # Load words from sources
     diec_words: set[str] = set()
     paraulogic_words: set[str] = set()
-    existing_words: set[str] = set()
+    existing_groups: dict[str, list[str]] = {}
 
     if not args.paraulogic_only:
         diec_words = load_diec_words(args.diec)
@@ -174,24 +235,51 @@ def main() -> int:
         print(f"Loaded {len(paraulogic_words)} words from Paraulogic", file=sys.stderr)
 
     if args.existing:
-        existing_words = load_existing_words(args.existing)
-        print(f"Loaded {len(existing_words)} words from existing file", file=sys.stderr)
+        existing_groups = load_existing_groups(args.existing)
+        existing_all_words = set()
+        for group in existing_groups.values():
+            existing_all_words.update(group)
+        print(
+            f"Loaded {len(existing_groups)} word groups "
+            f"({len(existing_all_words)} total words) from existing file",
+            file=sys.stderr,
+        )
 
     # Combine words based on mode
     if args.intersection:
         combined = diec_words & paraulogic_words
         print(f"Intersection: {len(combined)} words", file=sys.stderr)
+        # For intersection, output flat (no groupings preserved)
+        words_list = [[w] for w in sorted(combined)]
     elif args.diec_only:
-        combined = diec_words | existing_words
+        new_words = diec_words
+        # Add new words that aren't already in existing groups (by root)
+        for word in new_words:
+            if word not in existing_groups:
+                existing_groups[word] = [word]
+        # Sort by root form and output groups
+        words_list = [existing_groups[root] for root in sorted(existing_groups.keys())]
     elif args.paraulogic_only:
-        combined = paraulogic_words | existing_words
+        new_words = paraulogic_words
+        for word in new_words:
+            if word not in existing_groups:
+                existing_groups[word] = [word]
+        words_list = [existing_groups[root] for root in sorted(existing_groups.keys())]
     else:
-        combined = diec_words | paraulogic_words | existing_words
-        print(f"Union: {len(combined)} unique words", file=sys.stderr)
-
-    # Sort words and format as [["word1"], ["word2"], ...]
-    sorted_words = sorted(combined)
-    words_list = [[w] for w in sorted_words]
+        # Union: merge all sources, preserving existing groupings
+        new_words = diec_words | paraulogic_words
+        added_count = 0
+        for word in new_words:
+            if word not in existing_groups:
+                existing_groups[word] = [word]
+                added_count += 1
+        print(
+            f"Union: {len(existing_groups)} unique root words "
+            f"({added_count} new)",
+            file=sys.stderr,
+        )
+        # Sort by root form and output groups
+        words_list = [existing_groups[root] for root in sorted(existing_groups.keys())]
 
     # Write output in words_v*.json format
     output_data = {"words": words_list}
@@ -204,7 +292,11 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    print(f"Wrote {len(sorted_words)} words to {args.output}", file=sys.stderr)
+    total_words = sum(len(group) for group in words_list)
+    print(
+        f"Wrote {len(words_list)} word groups ({total_words} total words) to {args.output}",
+        file=sys.stderr,
+    )
     return 0
 
 
