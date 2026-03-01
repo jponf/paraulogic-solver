@@ -99,6 +99,12 @@ python tools/diec_crawler.py -d 0.3 -o output.json
 # Verbose output
 python tools/diec_crawler.py -v -o output.json    # INFO level
 python tools/diec_crawler.py -vv -o output.json   # DEBUG level
+
+# Crawl with verb conjugations (slow - ~20k additional requests)
+python tools/diec_crawler.py --conjugations -o diec_full.json
+
+# Crawl only conjugations using existing entries file
+python tools/diec_crawler.py --conjugations-only --entries-file diec_words.json -o diec_conjugated.json
 ```
 
 ### Options
@@ -109,6 +115,10 @@ python tools/diec_crawler.py -vv -o output.json   # DEBUG level
 | `-l, --letters` | Specific letters to crawl | all (a-z) |
 | `-d, --delay` | Delay between requests (seconds) | 0.5 |
 | `--words-only` | Output word list instead of JSON | false |
+| `--include-affixes` | Include prefixes/suffixes (filtered by default) | false |
+| `--conjugations` | Crawl verb conjugations after word list | false |
+| `--conjugations-only` | Only crawl conjugations (requires `--entries-file`) | false |
+| `--entries-file` | Existing entries file for `--conjugations-only` | none |
 | `-v, --verbose` | Increase verbosity | off |
 
 ### Output Formats
@@ -124,6 +134,32 @@ python tools/diec_crawler.py -vv -o output.json   # DEBUG level
       "word": "xa",
       "category": null,
       "homonym": null
+    }
+  ]
+}
+```
+
+**JSON with conjugations (`--conjugations`):**
+```json
+{
+  "total_entries": 19606,
+  "pages_crawled": 26,
+  "entries": [...],
+  "conjugated_forms": ["canta", "cantava", "cantaré", ...],
+  "total_conjugated_forms": 250000
+}
+```
+
+Additionally creates `*.conjugations.json` with per-verb data:
+```json
+{
+  "total_verbs": 5000,
+  "total_forms": 250000,
+  "verbs": [
+    {
+      "id": 1691,
+      "infinitive": "cantar",
+      "forms": ["cant", "canta", "cantada", "cantades", ...]
     }
   ]
 }
@@ -153,7 +189,10 @@ The crawler uses "starts with" search by default. Available conditions in the co
 
 - The DIEC2 website returns up to 1000 entries per page
 - Full crawl (a-z) takes approximately 15-30 minutes with default rate limiting
+- Conjugation crawl requires ~20k additional requests (~3 hours at 0.5s delay)
+- Prefixes (e.g., "a-") and suffixes are filtered by default; use `--include-affixes` to keep them
 - Be respectful of the server - avoid setting delay below 0.2 seconds
+- Conjugations include all dialectal variants (central, valencià, balear, nord-occidental, septentrional)
 
 ---
 
