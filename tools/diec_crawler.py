@@ -19,6 +19,7 @@ from urllib.parse import urlencode
 
 import bs4
 import requests
+import tqdm
 
 DIEC_BASE_URL: Final = "https://dlc.iec.cat"
 RESULTS_ENDPOINT: Final = f"{DIEC_BASE_URL}/Results"
@@ -172,7 +173,18 @@ def parse_entry_link(link: bs4.Tag) -> DiecEntry | None:
     # Parse homonym index from superscript (e.g., "a¹" -> word="a", homonym=1)
     homonym_index = None
     # Unicode superscript digits: ¹²³⁴⁵⁶⁷⁸⁹⁰
-    superscript_map = {"¹": 1, "²": 2, "³": 3, "⁴": 4, "⁵": 5, "⁶": 6, "⁷": 7, "⁸": 8, "⁹": 9, "⁰": 0}
+    superscript_map = {
+        "¹": 1,
+        "²": 2,
+        "³": 3,
+        "⁴": 4,
+        "⁵": 5,
+        "⁶": 6,
+        "⁷": 7,
+        "⁸": 8,
+        "⁹": 9,
+        "⁰": 0,
+    }
 
     for sup_char, num in superscript_map.items():
         if sup_char in word_text:
@@ -384,9 +396,7 @@ class DiecCrawler:
 
             if page == 0:
                 result.total_records = total_records
-                logger.info(
-                    f"Letter '{letter}': {total_records} total records found"
-                )
+                logger.info(f"Letter '{letter}': {total_records} total records found")
 
             if not entries:
                 break
@@ -532,10 +542,15 @@ def main():
     # Handle conjugations-only mode
     if args.conjugations_only:
         if not args.entries_file:
-            print("Error: --entries-file required with --conjugations-only", file=sys.stderr)
+            print(
+                "Error: --entries-file required with --conjugations-only",
+                file=sys.stderr,
+            )
             sys.exit(1)
         if not args.entries_file.exists():
-            print(f"Error: entries file not found: {args.entries_file}", file=sys.stderr)
+            print(
+                f"Error: entries file not found: {args.entries_file}", file=sys.stderr
+            )
             sys.exit(1)
 
         # Load existing entries
@@ -557,11 +572,15 @@ def main():
     else:
         # Normal crawl
         def progress(letter: str, current: int, total: int):
-            print(f"\rCrawling: {letter} ({current + 1}/{total})", end="", file=sys.stderr)
+            print(
+                f"\rCrawling: {letter} ({current + 1}/{total})", end="", file=sys.stderr
+            )
 
         print("Starting DIEC2 crawl...", file=sys.stderr)
         result = crawler.crawl_all(letters=args.letters, progress_callback=progress)
-        print(f"\nCrawl complete: {len(result.entries)} unique entries", file=sys.stderr)
+        print(
+            f"\nCrawl complete: {len(result.entries)} unique entries", file=sys.stderr
+        )
 
         # Filter out prefixes, suffixes, and non-word entries (unless --include-affixes)
         if args.include_affixes:
@@ -579,12 +598,17 @@ def main():
     # Crawl conjugations if requested
     all_forms: set[str] = set()
     if args.conjugations or args.conjugations_only:
-        def conj_progress(current: int, total: int, word: str):
-            print(f"\rChecking: {word} ({current + 1}/{total})", end="", file=sys.stderr)
-
         print("\nCrawling verb conjugations...", file=sys.stderr)
-        conjugations = crawler.crawl_conjugations(output_entries, conj_progress)
-        print(f"\nFound {len(conjugations)} verbs with conjugations", file=sys.stderr)
+        with tqdm.tqdm(
+            output_entries, desc="Checking entries", unit="entry", file=sys.stderr
+        ) as pbar:
+
+            def conj_progress(current: int, total: int, word: str):
+                pbar.set_postfix_str(word)
+                pbar.update(1)
+
+            conjugations = crawler.crawl_conjugations(output_entries, conj_progress)
+        print(f"Found {len(conjugations)} verbs with conjugations", file=sys.stderr)
 
         # Collect all conjugated forms
         for conj in conjugations:
