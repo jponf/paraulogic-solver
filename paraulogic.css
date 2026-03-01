@@ -334,13 +334,20 @@ h2 {
 }
 
 .container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 20px auto;
     margin-top: 10px
 }
 
 #solution-count {
     margin-bottom: 1em;
+}
+
+.disclaimer {
+    font-size: 0.8em;
+    color: #888;
+    font-style: italic;
+    margin-top: 1em;
 }
 
 #solution-list {
@@ -376,11 +383,6 @@ h2 {
     }
 }
 
-@media (min-width:800px) {
-    #solution-list {
-        column-count: 7;
-    }
-}
 
 #solution-list li {
     width: 100%;
@@ -409,4 +411,69 @@ body.loading {
 
 #footer-counter {
     display: none;
+}
+
+/* Paraulogic section */
+.container-paraulogic {
+    max-width: 800px;
+    margin: 40px auto 20px;
+    padding: 20px;
+    border-top: 1px solid #e7e7e7;
+    text-align: center;
+}
+
+.container-paraulogic h2 {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+}
+
+.container-paraulogic > p {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+#official-solution-list p {
+    color: #000;
+    font-size: 1em;
+}
+
+#official-solution-count {
+    margin-top: 20px;
+    margin-bottom: 1em;
+    color: #000;
+}
+
+#official-solution-list {
+    margin-bottom: 1em;
+    list-style-type: none;
+    column-count: 2;
+    column-gap: 25px;
+    column-rule-style: dotted;
+    position: relative;
+    text-align: left;
+}
+
+@media (min-width:500px) {
+    #official-solution-list {
+        column-count: 3;
+    }
+}
+
+@media (min-width:600px) {
+    #official-solution-list {
+        column-count: 4;
+    }
+}
+
+@media (min-width:700px) {
+    #official-solution-list {
+        column-count: 5;
+    }
+}
+
+@media (min-width:800px) {
+    #official-solution-list {
+        column-count: 7;
+    }
 }

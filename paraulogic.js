@@ -182,6 +182,126 @@ hexInputs.forEach(function (input, index) {
     });
 });
 
+/**
+ * Fetch today's characters from the original Paraulogic game.
+ */
+async function loadTodayCharacters() {
+    const PARAULOGIC_URL = "https://www.vilaweb.cat/paraulogic/";
+    const CORS_PROXY = "https://corsproxy.io/?";
+
+    try {
+        const response = await fetch(CORS_PROXY + encodeURIComponent(PARAULOGIC_URL));
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // Find today's letters in var t={"l":[...]} (not var y which is yesterday's)
+        const startMarker = 'var t={"l":[';
+        const startIndex = html.indexOf(startMarker);
+        if (startIndex === -1) {
+            throw new Error("No s'han trobat les lletres d'avui");
+        }
+
+        const arrayStart = startIndex + startMarker.length - 1; // include the '['
+        const arrayEnd = html.indexOf(']', arrayStart) + 1;
+        const arrayStr = html.substring(arrayStart, arrayEnd);
+
+        const characters = JSON.parse(arrayStr);
+
+        if (!characters || characters.length < 6) {
+            throw new Error("Format de lletres invàlid");
+        }
+        console.log("Characters:", characters)
+        // First letter is the center (required), rest are surrounding
+        const hexInputs = Array.from(document.querySelectorAll(".hex-input"));
+        hexInputs.forEach(input => input.value = "");
+        // Center letter goes to index 3 (the center hex input)
+        hexInputs[3].value = characters[0].toUpperCase();
+        // Remaining letters fill the other positions
+        let inputIndex = 0;
+        for (let i = 1; i < characters.length; i++) {
+            if (inputIndex === 3) inputIndex++; // Skip center position
+            hexInputs[inputIndex].value = characters[i].toUpperCase();
+            inputIndex++;
+        }
+
+        // Focus on solve button for quick action
+        document.getElementById("solve-button").focus();
+
+    } catch (error) {
+        console.error("Error loading today's characters:", error);
+        alert("Error carregant les lletres: " + error.message);
+    }
+}
+
+document.getElementById("load-today-button").onclick = loadTodayCharacters;
+
+/**
+ * Fetch today's solutions from the original Paraulogic game.
+ */
+async function loadTodaySolutions() {
+    const PARAULOGIC_URL = "https://www.vilaweb.cat/paraulogic/";
+    const CORS_PROXY = "https://corsproxy.io/?";
+
+    try {
+        const response = await fetch(CORS_PROXY + encodeURIComponent(PARAULOGIC_URL));
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const html = await response.text();
+
+        // Find today's solutions in var t={"l":[...],"p":{...}}
+        const startMarker = 'var t={"l":[';
+        const startIndex = html.indexOf(startMarker);
+        if (startIndex === -1) {
+            throw new Error("No s'han trobat les solucions d'avui");
+        }
+
+        // Find the "p": object within var t
+        const pMarker = ',"p":{';
+        const pIndex = html.indexOf(pMarker, startIndex);
+        if (pIndex === -1) {
+            throw new Error("No s'han trobat les solucions");
+        }
+
+        // Extract the solutions object - find matching closing brace
+        const objStart = pIndex + pMarker.length - 1; // include the '{'
+        let braceCount = 1;
+        let objEnd = objStart + 1;
+        while (braceCount > 0 && objEnd < html.length) {
+            if (html[objEnd] === '{') braceCount++;
+            else if (html[objEnd] === '}') braceCount--;
+            objEnd++;
+        }
+
+        const objStr = html.substring(objStart, objEnd);
+        const solutions = JSON.parse(objStr);
+        const solutionWords = Object.keys(solutions).sort();
+
+        // Display solutions in the official section
+        const resultsCountPar = document.getElementById("official-solution-count");
+        const resultsDiv = document.getElementById("official-solution-list");
+
+        resultsCountPar.innerHTML = "Solucions oficials: " + solutionWords.length;
+        resultsDiv.innerHTML = "";
+
+        solutionWords.forEach(word => {
+            const para = document.createElement("p");
+            para.appendChild(document.createTextNode(word));
+            resultsDiv.appendChild(para);
+        });
+
+    } catch (error) {
+        console.error("Error loading today's solutions:", error);
+        alert("Error carregant les solucions: " + error.message);
+    }
+}
+
+document.getElementById("load-solutions-button").onclick = loadTodaySolutions;
+
 document.getElementById("solve-button").onclick = function () {
     let resultsCountPar = document.getElementById("solution-count");
     let resultsDiv = document.getElementById("solution-list");
