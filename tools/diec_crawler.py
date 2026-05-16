@@ -6,6 +6,7 @@ https://dlc.iec.cat/
 """
 
 import argparse
+import collections
 import enum
 import json
 import logging
@@ -479,65 +480,59 @@ class DiecCrawler:
     ) -> CrawlResult:
         """Crawl all entries starting with a given letter.
 
-        If the search hits the 1000-entry limit, recursively searches with
-        more specific prefixes (e.g., 'a' -> 'aa', 'ab', 'ac', ...).
+        If the search hits the 1000-entry limit, searches with more specific
+        prefixes (e.g., 'a' -> 'aa', 'ab', 'ac', ...) using a queue.
         """
         result = CrawlResult()
         seen_ids: set[int] = set()
+        prefix_queue: collections.deque[str] = collections.deque([letter])
 
-        url = build_search_url(letter, condition, page=0)
-        try:
-            html = self._fetch_page(url)
-        except requests.RequestException as e:
-            logger.error(f"Failed to fetch '{letter}': {e}")
-            return result
+        while prefix_queue:
+            prefix = prefix_queue.popleft()
 
-        entries, total_records = parse_results_page(html)
-        result.total_records = total_records
-        result.pages_crawled = 1
+            url = build_search_url(prefix, condition, page=0)
+            try:
+                html = self._fetch_page(url)
+            except requests.RequestException as e:
+                logger.error(f"Failed to fetch '{prefix}': {e}")
+                continue
 
-        if not entries:
-            logger.debug(f"No entries found for '{letter}'")
-            return result
+            entries, total_records = parse_results_page(html)
+            result.pages_crawled += 1
 
-        # Add entries (filtering duplicates)
-        for entry in entries:
-            if entry.entry_id not in seen_ids:
-                seen_ids.add(entry.entry_id)
-                result.entries.append(entry)
+            if not entries:
+                logger.debug(f"No entries found for '{prefix}'")
+                continue
 
-        logger.info(
-            f"Prefix '{letter}': {len(result.entries)} entries (total_records={total_records})"
-        )
+            # Add entries (filtering duplicates)
+            new_entries = 0
+            for entry in entries:
+                if entry.entry_id not in seen_ids:
+                    seen_ids.add(entry.entry_id)
+                    result.entries.append(entry)
+                    new_entries += 1
 
-        # Check if we hit the 1000-entry limit
-        if total_records >= RESULTS_PER_PAGE:
-            logger.warning(
-                f"Prefix '{letter}' hit the {RESULTS_PER_PAGE}-entry limit, "
-                f"recursively searching with more specific prefixes..."
-            )
-
-            # Recursively search with more specific prefixes
-            for next_letter in CATALAN_LETTERS:
-                sub_prefix = letter + next_letter
-                logger.debug(f"Searching sub-prefix: {sub_prefix}")
-
-                sub_result = self.crawl_letter(sub_prefix, condition)
-
-                # Merge results, filtering duplicates
-                for entry in sub_result.entries:
-                    if entry.entry_id not in seen_ids:
-                        seen_ids.add(entry.entry_id)
-                        result.entries.append(entry)
-
-                result.pages_crawled += sub_result.pages_crawled
-
-            # Update total after recursive search
-            result.total_records = len(result.entries)
             logger.info(
-                f"Prefix '{letter}' complete after recursive search: "
-                f"{len(result.entries)} unique entries"
+                f"Prefix '{prefix}': {new_entries} entries (total_records={total_records})"
             )
+
+            # Check if we hit the 1000-entry limit
+            if total_records >= RESULTS_PER_PAGE:
+                logger.warning(
+                    f"Prefix '{prefix}' hit the {RESULTS_PER_PAGE}-entry limit, "
+                    f"adding more specific prefixes to queue..."
+                )
+
+                # Add more specific prefixes to the queue
+                for next_letter in CATALAN_LETTERS:
+                    sub_prefix = prefix + next_letter
+                    logger.debug(f"Queuing sub-prefix: {sub_prefix}")
+                    prefix_queue.append(sub_prefix)
+
+        result.total_records = len(result.entries)
+        logger.info(
+            f"Letter '{letter}' complete: {len(result.entries)} unique entries"
+        )
 
         return result
 
