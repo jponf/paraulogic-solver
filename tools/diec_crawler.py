@@ -402,49 +402,67 @@ class DiecCrawler:
         letter: str,
         condition: Diec2SearchCondition = Diec2SearchCondition.STARTS_WITH,
     ) -> CrawlResult:
-        """Crawl all entries starting with a given letter."""
+        """Crawl all entries starting with a given letter.
+
+        If the search hits the 1000-entry limit, recursively searches with
+        more specific prefixes (e.g., 'a' -> 'aa', 'ab', 'ac', ...).
+        """
         result = CrawlResult()
-        page = 0
         seen_ids: set[int] = set()
 
-        while True:
-            url = build_search_url(letter, condition, page)
-            try:
-                html = self._fetch_page(url)
-            except requests.RequestException as e:
-                logger.error(f"Failed to fetch page {page} for letter '{letter}': {e}")
-                break
+        url = build_search_url(letter, condition, page=0)
+        try:
+            html = self._fetch_page(url)
+        except requests.RequestException as e:
+            logger.error(f"Failed to fetch '{letter}': {e}")
+            return result
 
-            entries, total_records = parse_results_page(html)
+        entries, total_records = parse_results_page(html)
+        result.total_records = total_records
+        result.pages_crawled = 1
 
-            if page == 0:
-                result.total_records = total_records
-                logger.info(f"Letter '{letter}': {total_records} total records found")
+        if not entries:
+            logger.debug(f"No entries found for '{letter}'")
+            return result
 
-            if not entries:
-                break
-
-            # Filter out duplicates
-            new_entries = [e for e in entries if e.entry_id not in seen_ids]
-            if not new_entries:
-                # No new entries, we've seen them all
-                break
-
-            for entry in new_entries:
+        # Add entries (filtering duplicates)
+        for entry in entries:
+            if entry.entry_id not in seen_ids:
                 seen_ids.add(entry.entry_id)
                 result.entries.append(entry)
 
-            result.pages_crawled += 1
-            logger.debug(
-                f"Page {page}: {len(new_entries)} new entries "
-                f"(total: {len(result.entries)})"
+        logger.info(
+            f"Prefix '{letter}': {len(result.entries)} entries (total_records={total_records})"
+        )
+
+        # Check if we hit the 1000-entry limit
+        if total_records >= RESULTS_PER_PAGE:
+            logger.warning(
+                f"Prefix '{letter}' hit the {RESULTS_PER_PAGE}-entry limit, "
+                f"recursively searching with more specific prefixes..."
             )
 
-            # Check if we've got all records
-            if len(result.entries) >= total_records:
-                break
+            # Recursively search with more specific prefixes
+            for next_letter in CATALAN_LETTERS:
+                sub_prefix = letter + next_letter
+                logger.debug(f"Searching sub-prefix: {sub_prefix}")
 
-            page += 1
+                sub_result = self.crawl_letter(sub_prefix, condition)
+
+                # Merge results, filtering duplicates
+                for entry in sub_result.entries:
+                    if entry.entry_id not in seen_ids:
+                        seen_ids.add(entry.entry_id)
+                        result.entries.append(entry)
+
+                result.pages_crawled += sub_result.pages_crawled
+
+            # Update total after recursive search
+            result.total_records = len(result.entries)
+            logger.info(
+                f"Prefix '{letter}' complete after recursive search: "
+                f"{len(result.entries)} unique entries"
+            )
 
         return result
 
@@ -502,7 +520,7 @@ def main():
         type=str,
         nargs="+",
         default=None,
-        help="Specific letters to crawl (default: all a-z)",
+        help="Specific letters to crawl (if not specified, crawls all a-z)",
     )
     parser.add_argument(
         "-d",
