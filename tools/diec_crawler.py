@@ -88,14 +88,18 @@ class DiecEntry:
     word: str
     grammatical_category: str | None = None
     homonym_index: int | None = None
+    definition: str | None = None
 
     def to_dict(self) -> dict:
-        return {
+        result = {
             "id": self.entry_id,
             "word": self.word,
             "category": self.grammatical_category,
             "homonym": self.homonym_index,
         }
+        if self.definition is not None:
+            result["definition"] = self.definition
+        return result
 
 
 @dataclass
@@ -233,6 +237,30 @@ def parse_results_page(html: str) -> tuple[list[DiecEntry], int]:
     return entries, total_records
 
 
+def parse_definition_from_content(html_content: str) -> str | None:
+    """Parse definition text from entry content HTML.
+
+    Returns:
+        Cleaned definition text, or None if not found.
+    """
+    if not html_content:
+        return None
+
+    soup = bs4.BeautifulSoup(html_content, "html.parser")
+
+    # Remove script and style elements
+    for element in soup(["script", "style"]):
+        element.decompose()
+
+    # Get text and clean up whitespace
+    text = soup.get_text()
+    lines = (line.strip() for line in text.splitlines())
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    text = " ".join(chunk for chunk in chunks if chunk)
+
+    return text if text else None
+
+
 def parse_conjugation_page(html: str) -> set[str]:
     """Parse a verb conjugation page and extract all conjugated forms.
 
@@ -325,6 +353,18 @@ class DiecCrawler:
             logger.error(f"Failed to fetch entry info for {entry_id}: {e}")
             return None
 
+    def fetch_definition(self, entry_id: int) -> str | None:
+        """Fetch definition text for an entry.
+
+        Returns cleaned definition text, or None if not found.
+        """
+        info = self.fetch_entry_info(entry_id)
+        if not info:
+            return None
+
+        content = info.get("content", "")
+        return parse_definition_from_content(content)
+
     def fetch_conjugation(self, entry_id: int) -> set[str]:
         """Fetch all conjugated forms for a verb.
 
@@ -396,6 +436,41 @@ class DiecCrawler:
 
         logger.info(f"Found {len(conjugations)} verbs with conjugations")
         return conjugations
+
+    def crawl_definitions(
+        self,
+        entries: list[DiecEntry],
+        progress_callback: Callable[[int, int, str], None] | None = None,
+        max_workers: int = 4,
+    ) -> None:
+        """Fetch definitions for all entries (modifies entries in place).
+
+        Uses ThreadPoolExecutor for parallel fetching.
+        """
+        total = len(entries)
+
+        def fetch_and_update(entry: DiecEntry) -> tuple[DiecEntry, str | None]:
+            definition = self.fetch_definition(entry.entry_id)
+            return entry, definition
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_entry = {
+                executor.submit(fetch_and_update, entry): entry
+                for entry in entries
+            }
+
+            for i, future in enumerate(as_completed(future_to_entry)):
+                entry = future_to_entry[future]
+                if progress_callback:
+                    progress_callback(i, total, entry.word)
+
+                try:
+                    entry_obj, definition = future.result()
+                    entry_obj.definition = definition
+                except Exception as e:
+                    logger.error(f"Error fetching definition for {entry.word}: {e}")
+
+        logger.info(f"Fetched definitions for {len(entries)} entries")
 
     def crawl_letter(
         self,
@@ -545,10 +620,15 @@ def main():
         help="Crawl verb conjugations (uses parallel fetching)",
     )
     parser.add_argument(
+        "--definitions",
+        action="store_true",
+        help="Fetch definitions for all entries (uses parallel fetching)",
+    )
+    parser.add_argument(
         "--workers",
         type=int,
         default=4,
-        help="Number of parallel workers for conjugation fetching (default: 4)",
+        help="Number of parallel workers for conjugation/definition fetching (default: 4)",
     )
     parser.add_argument(
         "--conjugations-only",
@@ -665,6 +745,22 @@ def main():
 
         total_forms = sum(len(forms) for forms in verb_conjugations.values())
         print(f"Total conjugated forms: {total_forms}", file=sys.stderr)
+
+    # Fetch definitions if requested
+    if args.definitions:
+        print("\nFetching definitions...", file=sys.stderr)
+        with tqdm.tqdm(
+            output_entries, desc="Fetching definitions", unit="entry", file=sys.stderr
+        ) as pbar:
+
+            def def_progress(current: int, total: int, word: str):
+                pbar.set_postfix_str(word)
+                pbar.update(1)
+
+            crawler.crawl_definitions(
+                output_entries, def_progress, max_workers=args.workers
+            )
+        print(f"Fetched definitions for {len(output_entries)} entries", file=sys.stderr)
 
     # Write main output
     if args.words_only:
