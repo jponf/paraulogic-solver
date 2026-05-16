@@ -6,6 +6,7 @@ https://dlc.iec.cat/
 """
 
 import argparse
+import collections
 import enum
 import json
 import logging
@@ -103,8 +104,11 @@ class CrawlResult:
     """Result of a crawl operation."""
 
     entries: list[DiecEntry] = field(default_factory=list)
-    total_records: int = 0
     pages_crawled: int = 0
+
+    @property
+    def total_records(self) -> int:
+        return len(self.entries)
 
 
 @dataclass
@@ -402,50 +406,47 @@ class DiecCrawler:
         letter: str,
         condition: Diec2SearchCondition = Diec2SearchCondition.STARTS_WITH,
     ) -> CrawlResult:
-        """Crawl all entries starting with a given letter."""
-        result = CrawlResult()
-        page = 0
-        seen_ids: set[int] = set()
+        """Crawl all entries starting with a given letter.
 
-        while True:
-            url = build_search_url(letter, condition, page)
+        CurrentPage is broken server-side — it always returns the same first
+        RESULTS_PER_PAGE entries. When a prefix returns exactly RESULTS_PER_PAGE
+        results it is saturated, so we subdivide by appending each Catalan letter
+        and queuing those longer prefixes for fetching.
+        """
+        result = CrawlResult()
+        seen_ids: set[int] = set()
+        queue = collections.deque([letter])
+
+        while queue:
+            prefix = queue.popleft()
+            url = build_search_url(prefix, condition, page=0)
             try:
                 html = self._fetch_page(url)
             except requests.RequestException as e:
-                logger.error(f"Failed to fetch page {page} for letter '{letter}': {e}")
-                break
+                logger.error(f"Failed to fetch prefix '{prefix}': {e}")
+                continue
 
-            entries, total_records = parse_results_page(html)
+            entries, _ = parse_results_page(html)
+            result.pages_crawled += 1
 
-            if page == 0:
-                result.total_records = total_records
-                logger.info(f"Letter '{letter}': {total_records} total records found")
-
-            if not entries:
-                break
-
-            # Filter out duplicates
             new_entries = [e for e in entries if e.entry_id not in seen_ids]
-            if not new_entries:
-                # No new entries, we've seen them all
-                break
-
             for entry in new_entries:
                 seen_ids.add(entry.entry_id)
                 result.entries.append(entry)
 
-            result.pages_crawled += 1
             logger.debug(
-                f"Page {page}: {len(new_entries)} new entries "
+                f"Prefix '{prefix}': {len(new_entries)} new entries "
                 f"(total: {len(result.entries)})"
             )
 
-            # Check if we've got all records
-            if len(result.entries) >= total_records:
-                break
+            # Saturated — subdivide by extending the prefix with each letter
+            if len(entries) == RESULTS_PER_PAGE:
+                logger.info(
+                    f"Prefix '{prefix}' saturated ({len(entries)} results), subdividing…"
+                )
+                queue.extend(prefix + c for c in CATALAN_LETTERS)
 
-            page += 1
-
+        logger.info(f"Letter '{letter}': {result.total_records} total entries crawled")
         return result
 
     def crawl_all(
@@ -480,7 +481,6 @@ class DiecCrawler:
                 f"total unique: {len(total_result.entries)}"
             )
 
-        total_result.total_records = len(total_result.entries)
         return total_result
 
 
