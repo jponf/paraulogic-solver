@@ -108,8 +108,11 @@ class CrawlResult:
     """Result of a crawl operation."""
 
     entries: list[DiecEntry] = field(default_factory=list)
-    total_records: int = 0
     pages_crawled: int = 0
+
+    @property
+    def total_records(self) -> int:
+        return len(self.entries)
 
 
 @dataclass
@@ -529,7 +532,6 @@ class DiecCrawler:
                     logger.debug(f"Queuing sub-prefix: {sub_prefix}")
                     prefix_queue.append(sub_prefix)
 
-        result.total_records = len(result.entries)
         logger.info(
             f"Letter '{letter}' complete: {len(result.entries)} unique entries"
         )
